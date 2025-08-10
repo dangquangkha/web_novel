@@ -7,7 +7,7 @@ package DAO;
 import java.sql.SQLException;
 import model.User;
 import java.sql.Statement;
-
+import org.mindrot.jbcrypt.BCrypt;
 /**
  *
  * @author LAPTOP
@@ -50,8 +50,9 @@ public class UserDAO extends BaseDao {
                 u.setId(rs.getInt("id"));
                 u.setUsername(rs.getString("username"));
                 u.setEmail(rs.getString("email"));
-                u.setPasswordHash(rs.getString("password_hash"));
-                u.setRole(rs.getString("role"));
+                String hashed = BCrypt.hashpw(u.getPasswordHash(), BCrypt.gensalt(12));
+                ps.setString(3, hashed);
+                ps.setString(4, u.getRole() == null ? "READER" : u.getRole());
                 u.setCreatedAt(rs.getTimestamp("created_at"));
                 return u;
             }
@@ -86,6 +87,29 @@ public class UserDAO extends BaseDao {
         }
         return null;
     }
-    
-    
+
+    public User findById(int id) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+        try {
+
+            connection = dbc.getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setInt(1, id);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                User u = new User();
+                u.setId(rs.getInt("id"));
+                u.setUsername(rs.getString("username"));
+                u.setEmail(rs.getString("email"));
+                u.setPasswordHash(rs.getString("password_hash"));
+                u.setRole(rs.getString("role"));
+                u.setCreatedAt(rs.getTimestamp("created_at"));
+                return u;
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
 }
