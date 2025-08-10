@@ -19,6 +19,7 @@ public class BaseDao {
     public DBContext1 dbc = new DBContext1();
     public Connection connection = null;
     public PreparedStatement ps = null;
+    public PreparedStatement ps2 = null;
     public ResultSet rs = null;
 
     public BaseDao() {
