@@ -66,3 +66,14 @@ CREATE TABLE chapters (
   FOREIGN KEY (volume_id) REFERENCES volumes(id) ON DELETE CASCADE,
   UNIQUE (volume_id, chapter_number)
 );
+
+CREATE TABLE email_verifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  code VARCHAR(10) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  used BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
