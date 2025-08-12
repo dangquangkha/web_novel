@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.User;
+import org.mindrot.jbcrypt.BCrypt;
 import utils.EmailUtil;
 
 /**
@@ -103,7 +104,8 @@ public class RegisterServlet extends HttpServlet {
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
-        user.setPasswordHash(password); // createUser will handle hashing
+        String hashed = BCrypt.hashpw(password, BCrypt.gensalt());
+        user.setPasswordHash(hashed); // createUser will handle hashing
         user.setRole("READER");
 
         int userId = userDAO.createUser(user);

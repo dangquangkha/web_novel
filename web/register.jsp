@@ -31,7 +31,8 @@
                                 </div>
                             </c:if>
 
-                            <form action="/RegisterServlet" method="post">
+                            <form action="${pageContext.request.contextPath}/RegisterServlet" method="post">
+
                                 <div class="mb-3">
                                     <label for="username" class="form-label">Username</label>
                                     <input id="username" name="username" type="text" class="form-control" placeholder="Enter username" required>

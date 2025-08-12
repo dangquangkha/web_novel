@@ -25,7 +25,7 @@ public class EmailUtil {
 
     public EmailUtil() {
         try (InputStream in = Thread.currentThread().getContextClassLoader()
-                .getResourceAsStream("mail.properties")) {
+                .getResourceAsStream("constant/mail.properties")) {
             if (in == null) {
                 throw new RuntimeException("mail.properties not found on the classpath.");
             }

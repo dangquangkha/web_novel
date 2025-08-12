@@ -38,7 +38,7 @@
                                 </div>
                             </c:if>
 
-                            <form action="/VerifyEmailServlet" method="post">
+                            <form action="${pageContext.request.contextPath}/VerifyEmailServlet" method="post">
                                 <div class="mb-3">
                                     <label for="otp" class="form-label">OTP Code</label>
                                     <input id="otp" name="otp" type="text" class="form-control" placeholder="Enter OTP" required>
