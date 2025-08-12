@@ -10,12 +10,39 @@ import java.util.List;
 import model.Novel;
 import java.sql.Statement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+
 
 /**
  *
  * @author LAPTOP
  */
-public class NovelDAO extends BaseDao{
+public class NovelDAO extends BaseDao {
+
+    public List<Novel> listAllNovels() {
+        List<Novel> list = new ArrayList<>();
+        String sql = "SELECT * FROM novels ORDER BY created_at DESC";
+        try {
+            connection = dbc.getConnection();
+            ps = connection.prepareStatement(sql);
+            rs = ps.executeQuery();
+            while (rs != null && rs.next()) {
+                Novel n = mapRowToNovel(rs);
+                if (n != null) {
+                    list.add(n);
+                }
+            }
+        } catch (SQLException ex) {
+            System.err.println("listAllNovels error: " + ex.getMessage());
+        } finally {
+            try {
+                closeResources();
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+        return list;
+    }
 
     public int addNovel(Novel novel) {
         String sql = "INSERT INTO novels (author_id, title, other_names, is_sensitive, cover_path, genre, status, is_public, summary, notes, created_at) "
@@ -56,6 +83,9 @@ public class NovelDAO extends BaseDao{
 
     /**
      * Get list of novels by author id
+     *
+     * @param authorId
+     * @return
      */
     public List<Novel> getNovelsByAuthor(int authorId) {
         List<Novel> list = new ArrayList<>();
@@ -82,6 +112,9 @@ public class NovelDAO extends BaseDao{
 
     /**
      * Get novel detail by id
+     *
+     * @param id
+     * @return
      */
     public Novel getNovelById(int id) {
         String sql = "SELECT * FROM novels WHERE id = ?";
@@ -106,6 +139,9 @@ public class NovelDAO extends BaseDao{
 
     /**
      * Delete novel by id (returns true if deleted)
+     *
+     * @param id
+     * @return
      */
     public boolean deleteNovel(int id) {
         String sql = "DELETE FROM novels WHERE id = ?";
@@ -126,20 +162,46 @@ public class NovelDAO extends BaseDao{
         return false;
     }
 
-    private Novel mapRowToNovel(ResultSet rs) throws SQLException {
-        Novel n = new Novel();
-        n.setId(rs.getInt("id"));
-        n.setAuthorId(rs.getInt("author_id"));
-        n.setTitle(rs.getString("title"));
-        n.setOtherNames(rs.getString("other_names"));
-        n.setSensitive(rs.getBoolean("is_sensitive"));
-        n.setCoverPath(rs.getString("cover_path"));
-        n.setGenre(rs.getString("genre"));
-        n.setStatus(rs.getString("status"));
-        n.setIsPublic(rs.getBoolean("is_public"));
-        n.setSummary(rs.getString("summary"));
-        n.setNotes(rs.getString("notes"));
-        n.setCreatedAt(rs.getTimestamp("created_at"));
-        return n;
-    }
+        /**
+         * Chuyển 1 hàng ResultSet -> Novel Ghi chú: caller phải đảm bảo rs đang
+         * trỏ tới 1 row hợp lệ (đã gọi rs.next()).
+         */
+        private Novel mapRowToNovel(ResultSet r) throws SQLException {
+            if (r == null) {
+                return null;
+            }
+            Novel n = new Novel();
+            try {
+                n.setId(r.getInt("id"));
+                n.setAuthorId(r.getInt("author_id"));
+                n.setTitle(r.getString("title"));
+                n.setOtherNames(r.getString("other_names"));
+                n.setSensitive(r.getBoolean("is_sensitive"));
+                n.setCoverPath(r.getString("cover_path"));
+                n.setGenre(r.getString("genre"));
+                n.setStatus(r.getString("status"));
+                n.setIsPublic(r.getBoolean("is_public"));
+                n.setSummary(r.getString("summary"));
+                n.setNotes(r.getString("notes"));
+                n.setCreatedAt(r.getTimestamp("created_at"));
+            } catch (SQLException ex) {
+                // debug: in ra danh sách cột trả về để dễ tìm lỗi tên cột
+                try {
+                    ResultSetMetaData md = r.getMetaData();
+                    int cols = md.getColumnCount();
+                    StringBuilder sb = new StringBuilder("ResultSet columns: ");
+                    for (int i = 1; i <= cols; i++) {
+                        sb.append(md.getColumnLabel(i)).append("(").append(md.getColumnTypeName(i)).append(")");
+                        if (i < cols) {
+                            sb.append(", ");
+                        }
+                    }
+                    System.err.println(sb.toString());
+                } catch (Exception ignore) {
+                }
+                throw ex;
+            }
+            return n;
+        }
+
 }
