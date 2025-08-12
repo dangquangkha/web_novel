@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import model.User;
 import java.sql.Statement;
 import org.mindrot.jbcrypt.BCrypt;
+
 /**
  *
  * @author LAPTOP
@@ -110,6 +111,22 @@ public class UserDAO extends BaseDao {
             ex.printStackTrace();
         }
         return null;
+    }
+
+    public boolean isVerified(int userId) {
+        String sql = "SELECT COUNT(*) FROM email_verifications WHERE user_id = ? AND used = true";
+        try {
+            connection = dbc.getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setInt(1, userId);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("isVerified error: " + e.getMessage());
+        }
+        return false;
     }
 
 }
