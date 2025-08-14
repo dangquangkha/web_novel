@@ -11,9 +11,16 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
+import model.User;
 
 /**
  *
@@ -21,6 +28,10 @@ import java.util.UUID;
  */
 @WebServlet(name = "UploadImageServlet", urlPatterns = {"/UploadImageServlet"})
 public class UploadImageServlet extends HttpServlet {
+
+    private static final Set<String> ALLOWED_TYPES = new HashSet<>(Arrays.asList(
+            "image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"
+    ));
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -75,30 +86,74 @@ public class UploadImageServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        response.setContentType("application/json");
+        response.setContentType("application/json; charset=UTF-8");
         PrintWriter out = response.getWriter();
 
+        // 1. Auth: chỉ cho user đã đăng nhập upload
+        HttpSession session = request.getSession(false);
+        User user = null;
+        if (session == null || (user = (User) session.getAttribute("user")) == null) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            out.print("{\"error\":{\"message\":\"Unauthorized\"}}");
+            return;
+        }
+
         try {
-            // Thư mục lưu ảnh
-            String uploadPath = getServletContext().getRealPath("/uploads");
-            File uploadDir = new File(uploadPath);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
+            Part filePart = request.getPart("upload"); // CKEditor 5 uses 'upload'
+            if (filePart == null || filePart.getSize() == 0) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                out.print("{\"error\":{\"message\":\"No file uploaded\"}}");
+                return;
             }
 
-            // Lấy file từ request
-            Part filePart = request.getPart("upload");
-            String fileName = UUID.randomUUID() + "_" + filePart.getSubmittedFileName();
-            filePart.write(uploadPath + File.separator + fileName);
+            // 2. Check size
+            long maxSize = 5L * 1024L * 1024L; // 5MB
+            if (filePart.getSize() > maxSize) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                out.print("{\"error\":{\"message\":\"File too large (max 5MB)\"}}");
+                return;
+            }
 
-            // URL public để trả về cho CKEditor
-            String fileUrl = request.getContextPath() + "/uploads/" + fileName;
+            // 3. Check content type
+            String contentType = filePart.getContentType();
+            if (contentType == null || !ALLOWED_TYPES.contains(contentType.toLowerCase())) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                out.print("{\"error\":{\"message\":\"Invalid file type\"}}");
+                return;
+            }
 
-            // Trả JSON theo định dạng CKEditor yêu cầu
-            out.print("{\"url\": \"" + fileUrl + "\"}");
-        } catch (Exception e) {
-            e.printStackTrace();
-            out.print("{\"error\": {\"message\": \"Upload failed: " + e.getMessage() + "\"}}");
+            // 4. Save file to uploads/chapters
+            String uploadsDir = getServletContext().getRealPath("/uploads/chapters");
+            File uploadDirFile = new File(uploadsDir);
+            if (!uploadDirFile.exists()) {
+                uploadDirFile.mkdirs();
+            }
+
+            // keep extension from original filename
+            String submitted = filePart.getSubmittedFileName();
+            String ext = "";
+            if (submitted != null && submitted.lastIndexOf('.') >= 0) {
+                ext = submitted.substring(submitted.lastIndexOf('.'));
+            }
+            String filename = "ch_" + user.getId() + "_" + UUID.randomUUID().toString().replace("-", "") + ext;
+            File target = new File(uploadDirFile, filename);
+
+            try (InputStream in = filePart.getInputStream()) {
+                Files.copy(in, target.toPath());
+            }
+
+            // 5. Build public URL
+            String fileUrl = request.getContextPath() + "/uploads/chapters/" + filename;
+
+            // 6. Return JSON for CKEditor 5: { "url": "..." }
+            out.print("{\"url\":\"" + fileUrl + "\"}");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            out.print("{\"error\":{\"message\":\"Upload failed: " + ex.getMessage().replace("\"", "'") + "\"}}");
+        } finally {
+            out.flush();
+            out.close();
         }
     }
 

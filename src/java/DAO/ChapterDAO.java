@@ -4,7 +4,6 @@
  */
 package DAO;
 
-
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
@@ -117,7 +116,25 @@ public class ChapterDAO extends BaseDao {
         return null;
     }
 
-    
+    public boolean deleteChapter(int id) {
+        String sql = "DELETE FROM chapters WHERE id = ?";
+        try {
+            connection = dbc.getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setInt(1, id);
+            int affected = ps.executeUpdate();
+            return affected > 0;
+        } catch (SQLException ex) {
+            System.err.println("deleteChapter error: " + ex.getMessage());
+        } finally {
+            try {
+                closeResources();
+            } catch (Exception e) {
+            }
+        }
+        return false;
+    }
+
     private Chapter mapRowToChapter(ResultSet r) throws SQLException {
         if (r == null) {
             return null;
