@@ -24,6 +24,29 @@ public class Novel {
     private String notes;
     private Timestamp createdAt;
 
+    public Novel() {
+    }
+    
+    
+
+    public Novel(int id, int authorId, String title, String otherNames, boolean sensitive, String coverPath, String genre, String status, boolean isPublic, String summary, String notes, Timestamp createdAt) {
+        this.id = id;
+        this.authorId = authorId;
+        this.title = title;
+        this.otherNames = otherNames;
+        this.sensitive = sensitive;
+        this.coverPath = coverPath;
+        this.genre = genre;
+        this.status = status;
+        this.isPublic = isPublic;
+        this.summary = summary;
+        this.notes = notes;
+        this.createdAt = createdAt;
+    }
+    
+    
+    
+
     public int getId() {
         return id;
     }

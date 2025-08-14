@@ -64,10 +64,22 @@ public class AddVolumeServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        NovelDAO dao = new NovelDAO();
-        List<Novel> listNovel = dao.listAllNovels();
-        request.setAttribute("listNovel", listNovel);
+        // Lấy author_id từ session
+        HttpSession session = request.getSession(false);
+        Integer authorId = (session != null) ? (Integer) session.getAttribute("verifyUserId") : null;
 
+        if (authorId == null) {
+            // Nếu chưa đăng nhập thì chuyển hướng về trang login
+            response.sendRedirect("login.jsp");
+            return;
+        }
+
+        // Lấy danh sách novel theo author_id
+        NovelDAO dao = new NovelDAO();
+        List<Novel> listNovel = dao.listNovelsByAuthor(authorId);
+
+        // Gửi dữ liệu sang JSP
+        request.setAttribute("listNovel", listNovel);
         request.getRequestDispatcher("addVolume.jsp").forward(request, response);
     }
 
@@ -129,7 +141,7 @@ public class AddVolumeServlet extends HttpServlet {
             }
 
             VolumeDAO vdao = new VolumeDAO();
-            
+
             // check duplicate
             if (vdao.existsVolume(novelId, volumeNumber)) {
                 request.setAttribute("error", "Volume " + volumeNumber + " for this novel already exists.");
