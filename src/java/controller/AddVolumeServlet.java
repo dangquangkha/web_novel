@@ -66,13 +66,25 @@ public class AddVolumeServlet extends HttpServlet {
             throws ServletException, IOException {
         // Lấy author_id từ session
         HttpSession session = request.getSession(false);
-        Integer authorId = (session != null) ? (Integer) session.getAttribute("verifyUserId") : null;
+        Integer authorId = null;
+        if (session != null) {
+            User user = (User) session.getAttribute("user");
+            if (user != null) {
+                authorId = user.getId();
+            } else {
+                // fallback nếu bạn vẫn dùng verifyUserId ở chỗ khác
+                Integer vid = (Integer) session.getAttribute("verifyUserId");
+                if (vid != null) {
+                    authorId = vid;
+                }
+            }
+        }
 
         if (authorId == null) {
-            // Nếu chưa đăng nhập thì chuyển hướng về trang login
-            response.sendRedirect("login.jsp");
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
             return;
         }
+
 
         // Lấy danh sách novel theo author_id
         NovelDAO dao = new NovelDAO();
@@ -159,7 +171,7 @@ public class AddVolumeServlet extends HttpServlet {
             int newId = vdao.createVolume(v);
             if (newId > 0) {
                 // Successfully added -> redirect to this novel's volume list
-                response.sendRedirect("my_novels.jsp?novelId=" + novelId);
+                response.sendRedirect(request.getContextPath() + "/AddChapterServlet?novelId=" + novelId);
             } else {
                 request.setAttribute("error", "Failed to add volume. Please try again.");
                 doGet(request, response);

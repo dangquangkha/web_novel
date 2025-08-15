@@ -21,7 +21,7 @@
                 <div class="alert alert-danger">${requestScope.error}</div>
             </c:if>
 
-            <form action="AddVolumeServlet" method="post" class="bg-white p-4 shadow-sm rounded">
+            <form action="AddVolumeServlet" method="post" class="bg-white p-4 shadow-sm rounded" enctype="multipart/form-data">
 
                 <div class="mb-3">
                     <label for="novel_id" class="form-label">Select Novel *</label>

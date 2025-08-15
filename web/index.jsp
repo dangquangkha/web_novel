@@ -38,6 +38,7 @@
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
                                 <li><a class="dropdown-item" href="#">Account</a></li>
                                 <li><a class="dropdown-item" href="#">Order History</a></li>
+                                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/AddNovelServlet">Add new novel</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="LogoutServlet">Logout</a></li>
                             </ul>

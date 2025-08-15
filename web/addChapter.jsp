@@ -21,7 +21,7 @@
                 <div class="alert alert-danger">${requestScope.error}</div>
             </c:if>
 
-            <form action="AddChapterServlet" method="post" class="bg-white p-4 shadow-sm rounded">
+            <form action="AddChapterServlet" method="post" class="bg-white p-4 shadow-sm rounded" enctype="multipart/form-data">
 
                 <!-- CSRF token -->
                 <input type="hidden" name="_csrf" value="${csrfToken}" />
