@@ -157,7 +157,7 @@ public class AddNovelServlet extends HttpServlet {
         int newId = novelDAO.addNovel(novel);
         if (newId > 0) {
             // Success: redirect to the author's novels list or the novel detail page
-            response.sendRedirect("my_novels.jsp");
+            response.sendRedirect("/AddVolumeServlet");
         } else {
             // Failure: show error message
             request.setAttribute("error", "Failed to add the novel. Please try again.");
