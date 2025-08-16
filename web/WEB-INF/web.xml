@@ -10,7 +10,7 @@
     </servlet-mapping>
     <context-param>
         <param-name>uploads.path</param-name>
-        <param-value>/var/myapp/uploads/chapters</param-value>
+        <param-value>D:/WEB_NOVEL/web_novel/build/web/uploads/chapters</param-value>
     </context-param>
 
 </web-app>

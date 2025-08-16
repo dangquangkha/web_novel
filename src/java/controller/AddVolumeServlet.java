@@ -9,6 +9,7 @@ import DAO.VolumeDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +25,13 @@ import model.Volume;
  * @author LAPTOP
  */
 @WebServlet(name = "AddVolumeServlet", urlPatterns = {"/AddVolumeServlet"})
+@MultipartConfig(
+        fileSizeThreshold = 1024 * 1024, // 1 MB: file lớn hơn sẽ được ghi tạm ra disk
+        maxFileSize = 5L * 1024 * 1024, // 5 MB: tối đa 1 file
+        maxRequestSize = 20L * 1024 * 1024, // 20 MB: tổng kích thước request (files + fields)
+        location = "" // optional: thư mục tạm; "" => container temp
+)
+
 public class AddVolumeServlet extends HttpServlet {
 
     /**

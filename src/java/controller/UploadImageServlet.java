@@ -7,6 +7,7 @@ package controller;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,6 +35,14 @@ import model.User;
  * @author LAPTOP
  */
 @WebServlet(name = "UploadImageServlet", urlPatterns = {"/UploadImageServlet"})
+
+// Trên class: (tăng maxFileSize nếu bạn muốn cho phép file lớn hơn)
+@MultipartConfig(
+        fileSizeThreshold = 1024 * 1024,
+        maxFileSize = 10L * 1024 * 1024, // 10 MB - tăng lên nếu cần
+        maxRequestSize = 30L * 1024 * 1024
+)
+
 public class UploadImageServlet extends HttpServlet {
 
     /**
@@ -125,45 +134,76 @@ public class UploadImageServlet extends HttpServlet {
             throws ServletException, IOException {
 
         response.setContentType("application/json; charset=UTF-8");
-        // dùng try-with-resources để auto-close writer
+
         try (PrintWriter out = response.getWriter()) {
-            // 1. Auth: user phải có trong session (bạn cần đặt User khi login)
+            // Auth
             HttpSession session = request.getSession(false);
-            User user = null;
-            if (session == null || (user = (User) session.getAttribute("user")) == null) {
+            model.User user = (session == null) ? null : (model.User) session.getAttribute("user");
+            if (user == null) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 out.print("{\"error\":{\"message\":\"Unauthorized\"}}");
                 return;
             }
 
-            Part filePart = request.getPart("upload");
+            // Log all parts for debugging
+            try {
+                for (Part p : request.getParts()) {
+                    getServletContext().log("[Upload DEBUG] part name=" + p.getName()
+                            + " size=" + p.getSize() + " ct=" + p.getContentType());
+                }
+            } catch (Exception e) {
+                getServletContext().log("[Upload DEBUG] getParts() failed", e);
+            }
+
+            // Find file part robustly (CKEditor uses "upload")
+            Part filePart = null;
+            try {
+                filePart = request.getPart("upload");
+            } catch (Exception ignore) {
+            }
+            if (filePart == null) {
+                // fallback: pick first non-empty part that has image contentType
+                for (Part p : request.getParts()) {
+                    String ct = p.getContentType();
+                    if (ct != null && ct.toLowerCase().startsWith("image/") && p.getSize() > 0) {
+                        filePart = p;
+                        break;
+                    }
+                }
+            }
+
             if (filePart == null || filePart.getSize() == 0) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                out.print("{\"error\":{\"message\":\"No file uploaded\"}}");
+                out.print("{\"error\":{\"message\":\"No file uploaded (no suitable part found)\"}}");
                 return;
             }
 
-            long maxSize = 5L * 1024L * 1024L;
+            long maxSize = 10L * 1024L * 1024L; // must match @MultipartConfig maxFileSize
             if (filePart.getSize() > maxSize) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                out.print("{\"error\":{\"message\":\"File too large (max 5MB)\"}}");
+                out.print("{\"error\":{\"message\":\"File too large (max " + (maxSize / 1024 / 1024) + "MB)\"}}");
                 return;
             }
 
             String contentType = filePart.getContentType();
             if (contentType == null || !ALLOWED_TYPES.contains(contentType.toLowerCase())) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                out.print("{\"error\":{\"message\":\"Invalid file type\"}}");
+                out.print("{\"error\":{\"message\":\"Invalid file type: " + contentType + "\"}}");
                 return;
             }
 
-            // Read bytes into memory (file max 5MB ok)
+            // Read bytes
             byte[] data;
             try (InputStream in = filePart.getInputStream()) {
                 data = toByteArray(in);
+            } catch (IOException ioe) {
+                getServletContext().log("[Upload] read failed", ioe);
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                out.print("{\"error\":{\"message\":\"Failed to read uploaded file\"}}");
+                return;
             }
 
-            // Verify it's actually an image
+            // Verify image
             try (ByteArrayInputStream bin = new ByteArrayInputStream(data)) {
                 BufferedImage img = ImageIO.read(bin);
                 if (img == null) {
@@ -171,15 +211,19 @@ public class UploadImageServlet extends HttpServlet {
                     out.print("{\"error\":{\"message\":\"Uploaded file is not a valid image\"}}");
                     return;
                 }
+            } catch (Exception e) {
+                getServletContext().log("[Upload] image verify failed", e);
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                out.print("{\"error\":{\"message\":\"Uploaded file is not a valid image\"}}");
+                return;
             }
 
-            // Determine extension from submitted name (as fallback) but normalize to lower-case
+            // Build filename & write
             String submitted = filePart.getSubmittedFileName();
             String ext = "";
             if (submitted != null && submitted.lastIndexOf('.') >= 0) {
                 ext = submitted.substring(submitted.lastIndexOf('.')).toLowerCase();
             }
-            // force allowed extension set (map some common content types)
             if (ext.isEmpty()) {
                 if ("image/png".equals(contentType)) {
                     ext = ".png";
@@ -190,30 +234,42 @@ public class UploadImageServlet extends HttpServlet {
                 }
             }
 
-            // filename safe: ch_<userId>_<uuid> + ext
             String filename = "ch_" + user.getId() + "_" + UUID.randomUUID().toString().replace("-", "") + ext;
             Path target = uploadsDir.resolve(filename).normalize();
 
-            // ensure target is inside uploadsDir (extra safety)
             if (!target.startsWith(uploadsDir)) {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 out.print("{\"error\":{\"message\":\"Invalid upload path\"}}");
                 return;
             }
 
-            // write file
-            Files.write(target, data, StandardOpenOption.CREATE_NEW);
+            try {
+                Files.write(target, data, StandardOpenOption.CREATE_NEW);
+                getServletContext().log("[Upload] Saved file to: " + target.toString());
+            } catch (Exception e) {
+                getServletContext().log("[Upload] write failed", e);
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                out.print("{\"error\":{\"message\":\"Cannot save file: " + e.getMessage().replace("\"", "'") + "\"}}");
+                return;
+            }
 
-            // build public URL: nếu bạn dùng web server để serve uploads ngoài webroot,
-            // bạn cần map URL -> folder. Ở đây mình trả relative path pattern for demo.
-            // Bạn có thể thay bằng URL đầy đủ nếu biết domain.
+// build absolute URL (optional but recommended)
             String publicPath = request.getContextPath() + "/uploads/chapters/" + filename;
-            out.print("{\"url\":\"" + publicPath + "\"}");
+            String hostPort = (request.getServerPort() == 80 || request.getServerPort() == 443) ? "" : ":" + request.getServerPort();
+            String fullUrl = request.getScheme() + "://" + request.getServerName() + hostPort + publicPath;
+
+// set JSON content-type (you already do) and status
+            response.setStatus(HttpServletResponse.SC_CREATED); // 201
+
+// Return both fields to be safe for CKFinder and SimpleUploadAdapter
+// Example: {"url":"...","uploaded":1,"fileName":"..."}
+            out.print("{\"url\":\"" + fullUrl + "\",\"uploaded\":1,\"fileName\":\"" + filename + "\"}");
+
         } catch (Exception ex) {
-            ex.printStackTrace();
+            getServletContext().log("[Upload] Unexpected", ex);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             try (PrintWriter out = response.getWriter()) {
-                out.print("{\"error\":{\"message\":\"Upload failed: " + escapeForJson(ex.getMessage()) + "\"}}");
+                out.print("{\"error\":{\"message\":\"Upload failed: " + (ex.getMessage() == null ? "error" : ex.getMessage().replace("\"", "'")) + "\"}}");
             }
         }
     }
