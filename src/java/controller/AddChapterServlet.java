@@ -15,7 +15,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import model.Chapter;
 import model.Novel;
@@ -72,10 +74,13 @@ public class AddChapterServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        HttpSession session = request.getSession(false);
-        User user = null;
-        if (session != null) {
-            user = (User) session.getAttribute("user");
+        HttpSession session = request.getSession(true); // ensure session exists
+        User user = (session != null) ? (User) session.getAttribute("user") : null;
+
+        // Nếu chưa login -> redirect
+        if (user == null) {
+            response.sendRedirect("login.jsp");
+            return;
         }
 
         String novelIdParam = request.getParameter("novelId");
@@ -83,11 +88,7 @@ public class AddChapterServlet extends HttpServlet {
 
         if (novelIdParam != null && !novelIdParam.isEmpty()) {
             int novelId = Integer.parseInt(novelIdParam);
-            // If needed, check permission: if user is not the author, redirect
-            if (user == null) {
-                response.sendRedirect("login.jsp");
-                return;
-            }
+
             Novel novel = novelDAO.getNovelById(novelId);
             if (novel == null) {
                 request.setAttribute("error", "Novel does not exist.");
@@ -103,23 +104,27 @@ public class AddChapterServlet extends HttpServlet {
             volumes = volumeDAO.listVolumesByNovel(novelId);
             request.setAttribute("selectedNovel", novel);
         } else {
-            // No novelId provided: get all volumes from all novels of the logged-in author
-            if (user == null) {
-                response.sendRedirect("login.jsp");
-                return;
-            }
-            // Get novels of the author, then get volumes for each novel
+            // Lấy tất cả volumes của các novel thuộc author
             List<Novel> myNovels = novelDAO.listNovelsByAuthor(user.getId());
-            // Combine all volumes from each novel
             volumes = new java.util.ArrayList<>();
             for (Novel n : myNovels) {
                 volumes.addAll(volumeDAO.listVolumesByNovel(n.getId()));
             }
         }
 
+        // --- CSRF token management: sử dụng Set để cho phép nhiều token cùng tồn tại (multi-tab) ---
+        @SuppressWarnings("unchecked")
+        Set<String> csrfSet = (Set<String>) session.getAttribute("csrfAddChapterTokens");
+        if (csrfSet == null) {
+            csrfSet = new HashSet<>();
+        }
         String csrfToken = UUID.randomUUID().toString();
-        session.setAttribute("csrfAddChapter", csrfToken);
+        csrfSet.add(csrfToken);
+        session.setAttribute("csrfAddChapterTokens", csrfSet);
+
         request.setAttribute("csrfToken", csrfToken);
+
+        System.out.println("[doGet] sessionId=" + session.getId() + ", added csrfToken=" + csrfToken + ", totalTokens=" + csrfSet.size());
 
         request.setAttribute("volumes", volumes);
         request.getRequestDispatcher("addChapter.jsp").forward(request, response);
@@ -138,28 +143,39 @@ public class AddChapterServlet extends HttpServlet {
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
-
         HttpSession session = request.getSession(false);
-        User user = null;
-        if (session != null) {
-            user = (User) session.getAttribute("user");
-        }
+        String sessionId = (session != null) ? session.getId() : "null";
+        String formToken = request.getParameter("chapterCsrf");
+
+        @SuppressWarnings("unchecked")
+        Set<String> csrfSet = (session != null) ? (Set<String>) session.getAttribute("csrfAddChapterTokens") : null;
+        String sessionTokensInfo = (csrfSet == null) ? "null" : ("size=" + csrfSet.size());
+
+        System.out.println("[doPost] sessionId=" + sessionId + ", csrfSet=" + sessionTokensInfo + ", formToken=" + formToken);
+
+        // Check login
+        User user = (session != null) ? (User) session.getAttribute("user") : null;
         if (user == null) {
-            request.setAttribute("error", "You must be logged in.");
-            doGet(request, response);
+            response.sendRedirect("login.jsp");
             return;
         }
 
-        // CSRF token validation
-        String sessionToken = (String) session.getAttribute("csrfAddChapter");
-        String formToken = request.getParameter("_csrf");
-        if (sessionToken == null || formToken == null || !sessionToken.equals(formToken)) {
-            request.setAttribute("error", "Yêu cầu không hợp lệ (CSRF). Vui lòng thử lại.");
-            doGet(request, response);
+        // CSRF validation
+        if (formToken == null || csrfSet == null || !csrfSet.contains(formToken)) {
+            System.out.println("[doPost] CSRF MISMATCH. formToken=" + formToken);
+            request.setAttribute("error", "Invalid request (CSRF). Please try again.");
+            // giữ lại token cũ để form render được
+            request.setAttribute("csrfToken", formToken);
+            // nạp lại volumes của author
+            List<Novel> myNovels = novelDAO.listNovelsByAuthor(user.getId());
+            List<Volume> volumes = new java.util.ArrayList<>();
+            for (Novel n : myNovels) {
+                volumes.addAll(volumeDAO.listVolumesByNovel(n.getId()));
+            }
+            request.setAttribute("volumes", volumes);
+            request.getRequestDispatcher("addChapter.jsp").forward(request, response);
             return;
         }
-        // One-time token: remove from session (prevent reuse)
-        session.removeAttribute("csrfAddChapter");
 
         try {
             int volumeId = Integer.parseInt(request.getParameter("volume_id"));
@@ -167,44 +183,49 @@ public class AddChapterServlet extends HttpServlet {
             String title = request.getParameter("title");
             String content = request.getParameter("content");
 
+            // validate
             if (chapterNumber <= 0) {
                 request.setAttribute("error", "Chapter number must be greater than 0.");
-                doGet(request, response);
-                return;
-            }
-            if (title == null || title.trim().isEmpty()) {
+            } else if (title == null || title.trim().isEmpty()) {
                 request.setAttribute("error", "Chapter title cannot be empty.");
-                doGet(request, response);
-                return;
-            }
-            if (content == null || content.trim().isEmpty()) {
+            } else if (content == null || content.trim().isEmpty()) {
                 request.setAttribute("error", "Chapter content cannot be empty.");
-                doGet(request, response);
+            }
+
+            if (request.getAttribute("error") != null) {
+                // nếu có lỗi -> giữ token cũ
+                request.setAttribute("csrfToken", formToken);
+                List<Novel> myNovels = novelDAO.listNovelsByAuthor(user.getId());
+                List<Volume> volumes = new java.util.ArrayList<>();
+                for (Novel n : myNovels) {
+                    volumes.addAll(volumeDAO.listVolumesByNovel(n.getId()));
+                }
+                request.setAttribute("volumes", volumes);
+                request.getRequestDispatcher("addChapter.jsp").forward(request, response);
                 return;
             }
 
-            // Check permission: volume -> novel -> author
+            // Permission check
             Volume vol = volumeDAO.getVolumeById(volumeId);
-            if (vol == null) {
-                request.setAttribute("error", "Volume does not exist.");
-                doGet(request, response);
-                return;
-            }
-            Novel novel = novelDAO.getNovelById(vol.getNovelId());
-            if (novel == null || novel.getAuthorId() != user.getId()) {
+            Novel novel = (vol != null) ? novelDAO.getNovelById(vol.getNovelId()) : null;
+            if (vol == null || novel == null || novel.getAuthorId() != user.getId()) {
                 request.setAttribute("error", "You do not have permission to add a chapter to this volume.");
-                doGet(request, response);
+                request.setAttribute("csrfToken", formToken);
+                request.setAttribute("volumes", volumeDAO.listVolumesByNovel(novel != null ? novel.getId() : -1));
+                request.getRequestDispatcher("addChapter.jsp").forward(request, response);
                 return;
             }
 
-            // Check for duplicate chapter number
+            // Duplicate check
             if (chapterDAO.existsChapter(volumeId, chapterNumber)) {
                 request.setAttribute("error", "Chapter " + chapterNumber + " already exists in this volume.");
-                doGet(request, response);
+                request.setAttribute("csrfToken", formToken);
+                request.setAttribute("volumes", volumeDAO.listVolumesByNovel(novel.getId()));
+                request.getRequestDispatcher("addChapter.jsp").forward(request, response);
                 return;
             }
 
-            // Simple word count (split by whitespace)
+            // Word count
             int wc = content.trim().isEmpty() ? 0 : content.trim().split("\\s+").length;
 
             Chapter c = new Chapter();
@@ -216,20 +237,42 @@ public class AddChapterServlet extends HttpServlet {
 
             int newId = chapterDAO.createChapter(c);
             if (newId > 0) {
-                // Redirect to a page showing chapters of this volume
-                response.sendRedirect("viewChapters.jsp?volumeId=" + volumeId);
+                // ✅ chỉ khi thành công mới remove token
+                csrfSet.remove(formToken);
+                if (csrfSet.isEmpty()) {
+                    session.removeAttribute("csrfAddChapterTokens");
+                } else {
+                    session.setAttribute("csrfAddChapterTokens", csrfSet);
+                }
+                response.sendRedirect("ViewChaptersServlet?volumeId=" + volumeId);
             } else {
                 request.setAttribute("error", "Failed to add chapter. Please try again.");
-                doGet(request, response);
+                request.setAttribute("csrfToken", formToken);
+                request.setAttribute("volumes", volumeDAO.listVolumesByNovel(novel.getId()));
+                request.getRequestDispatcher("addChapter.jsp").forward(request, response);
             }
 
         } catch (NumberFormatException nfe) {
             request.setAttribute("error", "Invalid numeric input.");
-            doGet(request, response);
+            request.setAttribute("csrfToken", formToken);
+            List<Novel> myNovels = novelDAO.listNovelsByAuthor(user.getId());
+            List<Volume> volumes = new java.util.ArrayList<>();
+            for (Novel n : myNovels) {
+                volumes.addAll(volumeDAO.listVolumesByNovel(n.getId()));
+            }
+            request.setAttribute("volumes", volumes);
+            request.getRequestDispatcher("addChapter.jsp").forward(request, response);
         } catch (Exception ex) {
             ex.printStackTrace();
             request.setAttribute("error", "System error: " + ex.getMessage());
-            doGet(request, response);
+            request.setAttribute("csrfToken", formToken);
+            List<Novel> myNovels = novelDAO.listNovelsByAuthor(user.getId());
+            List<Volume> volumes = new java.util.ArrayList<>();
+            for (Novel n : myNovels) {
+                volumes.addAll(volumeDAO.listVolumesByNovel(n.getId()));
+            }
+            request.setAttribute("volumes", volumes);
+            request.getRequestDispatcher("addChapter.jsp").forward(request, response);
         }
     }
 
