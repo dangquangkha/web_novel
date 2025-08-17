@@ -23,6 +23,7 @@
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/model/Volume.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/web/readChapter.jsp</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/ReadChapterServlet.java</file>
+            <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/VolumeListServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/test/DAO/UserDAOTest.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/web/META-INF/context.xml</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/model/User.java</file>
@@ -30,7 +31,9 @@
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/AddNovelServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/LoginServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/web/add_novel.jsp</file>
+            <file>file:/D:/WEB_NOVEL/web_novel/web/volume_list.jsp</file>
             <file>file:/D:/WEB_NOVEL/web_novel/test/DAO/EmailVerificationDAOTest.java</file>
+            <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/MyNovelsServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/web/viewChapters.jsp</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/DAO/NovelDAO.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/AddVolumeServlet.java</file>

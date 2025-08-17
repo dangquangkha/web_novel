@@ -36,34 +36,40 @@
                         </tr>
                     </thead>
                     <tbody>
-                    <c:forEach var="novel" items="${novels}">
-                        <tr>
-                            <td>${novel.id}</td>
-                            <td>${novel.title}</td>
-                            <td>${novel.genre}</td>
-                            <td>${novel.status}</td>
-                            <td>
-                        <c:choose>
-                            <c:when test="${not empty novel.coverPath}">
-                                <img src="${novel.coverPath}" alt="cover" class="img-thumbnail" style="max-width: 80px;">
-                            </c:when>
-                            <c:otherwise>
-                                <span class="text-muted fst-italic">No cover</span>
-                            </c:otherwise>
-                        </c:choose>
-                        </td>
-                        <td>
-                            <a href="edit_novel.jsp?id=${novel.id}" class="btn btn-sm btn-primary">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
-                            <a href="delete_novel?id=${novel.id}"
-                               class="btn btn-sm btn-danger"
-                               onclick="return confirm('Are you sure you want to delete this novel?');">
-                                <i class="bi bi-trash"></i> Delete
-                            </a>
-                        </td>
-                        </tr>
-                    </c:forEach>
+                        <c:forEach var="novel" items="${novels}">
+                            <tr>
+                                <td>${novel.id}</td>
+                                <td>
+                                    <a href="${pageContext.request.contextPath}/VolumeListServlet?novelId=${novel.id}" class="text-decoration-none">
+                                        ${novel.title}
+                                    </a>
+                                </td>
+
+
+                                <td>${novel.genre}</td>
+                                <td>${novel.status}</td>
+                                <td>
+                                    <c:choose>
+                                        <c:when test="${not empty novel.coverPath}">
+                                            <img src="${novel.coverPath}" alt="cover" class="img-thumbnail" style="max-width: 80px;">
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="text-muted fst-italic">No cover</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </td>
+                                <td>
+                                    <a href="edit_novel.jsp?id=${novel.id}" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                    <a href="delete_novel?id=${novel.id}"
+                                       class="btn btn-sm btn-danger"
+                                       onclick="return confirm('Are you sure you want to delete this novel?');">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </a>
+                                </td>
+                            </tr>
+                        </c:forEach>
                     </tbody>
                 </table>
             </div>

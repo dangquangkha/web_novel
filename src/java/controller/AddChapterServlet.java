@@ -244,7 +244,7 @@ public class AddChapterServlet extends HttpServlet {
                 } else {
                     session.setAttribute("csrfAddChapterTokens", csrfSet);
                 }
-                response.sendRedirect("ViewChaptersServlet?volumeId=" + volumeId);
+                response.sendRedirect("/MyNovelsServlet");
             } else {
                 request.setAttribute("error", "Failed to add chapter. Please try again.");
                 request.setAttribute("csrfToken", formToken);
