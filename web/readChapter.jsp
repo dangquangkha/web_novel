@@ -52,7 +52,7 @@
 
                             <!-- Back button -->
                             <div class="mt-4">
-                                <c:url var="backUrl" value="/viewChapters.jsp">
+                                <c:url var="backUrl" value="/ViewChaptersServlet">
                                     <c:param name="volumeId" value="${chapter.volumeId}" />
                                 </c:url>
 
@@ -60,6 +60,7 @@
                                     &larr; Back to chapter list
                                 </a>
                             </div>
+                                    
                         </div>
                     </div>
                 </div>

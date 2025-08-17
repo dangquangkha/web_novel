@@ -55,7 +55,7 @@
                                     <tr>
                                         <td><c:out value="${ch.chapterNumber}"/></td>
                                     <td>
-                                        <a href="<c:url value='readChapter.jsp'><c:param name='chapterId' value='${ch.id}'/></c:url>">
+                                        <a href="<c:url value='ReadChapterServlet'><c:param name='chapterId' value='${ch.id}'/></c:url>">
                                             <c:out value="${ch.title}"/>
                                         </a>
                                     </td>
