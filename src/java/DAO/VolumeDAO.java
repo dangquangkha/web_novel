@@ -15,13 +15,14 @@ import java.sql.ResultSet;
  *
  * @author LAPTOP
  */
-public class VolumeDAO extends BaseDao{
+public class VolumeDAO extends BaseDao {
 
     /**
      * Kiểm tra volume đã tồn tại (unique constraint: novel_id + volume_number)
+     *
      * @param novelId
      * @param volumeNumber
-     * @return 
+     * @return
      */
     public boolean existsVolume(int novelId, int volumeNumber) {
         String sql = "SELECT COUNT(*) FROM volumes WHERE novel_id = ? AND volume_number = ?";
@@ -47,8 +48,9 @@ public class VolumeDAO extends BaseDao{
 
     /**
      * Tạo volume mới, trả về id (generated key) hoặc -1 nếu thất bại.
+     *
      * @param v
-     * @return 
+     * @return
      */
     public int createVolume(Volume v) {
         String sql = "INSERT INTO volumes (novel_id, volume_number, title, description, created_at) VALUES (?, ?, ?, ?, NOW())";
@@ -77,8 +79,9 @@ public class VolumeDAO extends BaseDao{
 
     /**
      * Lấy danh sách volumes của 1 novel (dùng cho hiển thị)
+     *
      * @param novelId
-     * @return 
+     * @return
      */
     public List<Volume> listVolumesByNovel(int novelId) {
         List<Volume> list = new ArrayList<>();
@@ -107,8 +110,9 @@ public class VolumeDAO extends BaseDao{
 
     /**
      * Lấy volume theo id
+     *
      * @param id
-     * @return 
+     * @return
      */
     public Volume getVolumeById(int id) {
         String sql = "SELECT * FROM volumes WHERE id = ?";
@@ -129,6 +133,37 @@ public class VolumeDAO extends BaseDao{
             }
         }
         return null;
+    }
+
+    public boolean updateVolume(Volume v) {
+
+        String sql = "UPDATE volumes SET volume_number=?, title=?, description=? WHERE id=?";
+
+        try {
+            connection = dbc.getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setInt(1, v.getVolumeNumber());
+            ps.setString(2, v.getTitle());
+            ps.setString(3, v.getDescription());
+            ps.setInt(4, v.getId());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+        }
+        return false;
+    }
+
+    public boolean deleteVolume(int id) {
+
+        String sql = "DELETE FROM volumes WHERE id=?";
+
+        try {
+            connection = dbc.getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+        }
+        return false;
     }
 
     private Volume mapRowToVolume(ResultSet r) throws SQLException {

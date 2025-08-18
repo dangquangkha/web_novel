@@ -3,16 +3,21 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/DeleteNovelServlet.java</file>
+            <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/EditNovelServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/DAO/UserDAO.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/utils/DBContext1.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/VerifyEmailServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/web/addVolume.jsp</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/AddChapterServlet.java</file>
+            <file>file:/D:/WEB_NOVEL/web_novel/src/java/model/Novel.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/UploadImageServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/DAO/EmailVerificationDAO.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/utils/EmailUtil.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/web/my_novels.jsp</file>
+            <file>file:/D:/WEB_NOVEL/web_novel/web/edit_novel.jsp</file>
             <file>file:/D:/WEB_NOVEL/web_novel/web/WEB-INF/web.xml</file>
+            <file>file:/D:/WEB_NOVEL/web_novel/web/edit_volume.jsp</file>
             <file>file:/D:/WEB_NOVEL/web_novel/web/register.jsp</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/ViewChaptersServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/web/index.jsp</file>
@@ -21,6 +26,7 @@
             <file>file:/D:/WEB_NOVEL/web_novel/web/addChapter.jsp</file>
             <file>file:/D:/WEB_NOVEL/web_novel/web/verifyEmail.jsp</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/model/Volume.java</file>
+            <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/EditVolumeServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/web/readChapter.jsp</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/ReadChapterServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/VolumeListServlet.java</file>
@@ -35,7 +41,9 @@
             <file>file:/D:/WEB_NOVEL/web_novel/test/DAO/EmailVerificationDAOTest.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/MyNovelsServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/web/viewChapters.jsp</file>
+            <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/DeleteVolumeServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/DAO/NovelDAO.java</file>
+            <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/DeleteChapterServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/AddVolumeServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/LogoutServlet.java</file>
             <file>file:/D:/WEB_NOVEL/web_novel/src/java/controller/RegisterServlet.java</file>
