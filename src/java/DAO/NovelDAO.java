@@ -12,7 +12,6 @@ import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 
-
 /**
  *
  * @author LAPTOP
@@ -42,6 +41,35 @@ public class NovelDAO extends BaseDao {
             }
         }
         return list;
+    }
+
+    public List<Novel> listNovelsByAuthor(int authorId) {
+        List<Novel> novels = new ArrayList<>();
+        String sql = "SELECT * FROM novels WHERE author_id = ? ORDER BY created_at DESC";
+
+        try {
+            connection = dbc.getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setInt(1, authorId);
+
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                Novel novel = mapRowToNovel(rs);
+                if (novel != null) {
+                    novels.add(novel);
+                }
+            }
+        } catch (SQLException ex) {
+            System.err.println("listNovelsByAuthor error: " + ex.getMessage());
+        } finally {
+            try {
+                closeResources();
+            } catch (Exception e) {
+                // ignore silently
+            }
+        }
+
+        return novels;
     }
 
     public int addNovel(Novel novel) {
@@ -137,6 +165,28 @@ public class NovelDAO extends BaseDao {
         return null;
     }
 
+    public boolean updateNovel(Novel novel) {
+
+        String sql = "UPDATE novels SET title=?, other_names=?, genre=?, status=?, cover_path=?, summary=? WHERE id=?";
+
+        try {
+            connection = dbc.getConnection();
+            ps = connection.prepareStatement(sql);
+
+            ps.setString(1, novel.getTitle());
+            ps.setString(2, novel.getOtherNames());
+            ps.setString(3, novel.getGenre());
+            ps.setString(4, novel.getStatus());
+            ps.setString(5, novel.getCoverPath());
+            ps.setString(6, novel.getSummary());
+            ps.setInt(7, novel.getId());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return false;
+    }
+
     /**
      * Delete novel by id (returns true if deleted)
      *
@@ -162,46 +212,46 @@ public class NovelDAO extends BaseDao {
         return false;
     }
 
-        /**
-         * Chuyển 1 hàng ResultSet -> Novel Ghi chú: caller phải đảm bảo rs đang
-         * trỏ tới 1 row hợp lệ (đã gọi rs.next()).
-         */
-        private Novel mapRowToNovel(ResultSet r) throws SQLException {
-            if (r == null) {
-                return null;
-            }
-            Novel n = new Novel();
-            try {
-                n.setId(r.getInt("id"));
-                n.setAuthorId(r.getInt("author_id"));
-                n.setTitle(r.getString("title"));
-                n.setOtherNames(r.getString("other_names"));
-                n.setSensitive(r.getBoolean("is_sensitive"));
-                n.setCoverPath(r.getString("cover_path"));
-                n.setGenre(r.getString("genre"));
-                n.setStatus(r.getString("status"));
-                n.setIsPublic(r.getBoolean("is_public"));
-                n.setSummary(r.getString("summary"));
-                n.setNotes(r.getString("notes"));
-                n.setCreatedAt(r.getTimestamp("created_at"));
-            } catch (SQLException ex) {
-                // debug: in ra danh sách cột trả về để dễ tìm lỗi tên cột
-                try {
-                    ResultSetMetaData md = r.getMetaData();
-                    int cols = md.getColumnCount();
-                    StringBuilder sb = new StringBuilder("ResultSet columns: ");
-                    for (int i = 1; i <= cols; i++) {
-                        sb.append(md.getColumnLabel(i)).append("(").append(md.getColumnTypeName(i)).append(")");
-                        if (i < cols) {
-                            sb.append(", ");
-                        }
-                    }
-                    System.err.println(sb.toString());
-                } catch (Exception ignore) {
-                }
-                throw ex;
-            }
-            return n;
+    /**
+     * Chuyển 1 hàng ResultSet -> Novel Ghi chú: caller phải đảm bảo rs đang trỏ
+     * tới 1 row hợp lệ (đã gọi rs.next()).
+     */
+    private Novel mapRowToNovel(ResultSet r) throws SQLException {
+        if (r == null) {
+            return null;
         }
+        Novel n = new Novel();
+        try {
+            n.setId(r.getInt("id"));
+            n.setAuthorId(r.getInt("author_id"));
+            n.setTitle(r.getString("title"));
+            n.setOtherNames(r.getString("other_names"));
+            n.setSensitive(r.getBoolean("is_sensitive"));
+            n.setCoverPath(r.getString("cover_path"));
+            n.setGenre(r.getString("genre"));
+            n.setStatus(r.getString("status"));
+            n.setIsPublic(r.getBoolean("is_public"));
+            n.setSummary(r.getString("summary"));
+            n.setNotes(r.getString("notes"));
+            n.setCreatedAt(r.getTimestamp("created_at"));
+        } catch (SQLException ex) {
+            // debug: in ra danh sách cột trả về để dễ tìm lỗi tên cột
+            try {
+                ResultSetMetaData md = r.getMetaData();
+                int cols = md.getColumnCount();
+                StringBuilder sb = new StringBuilder("ResultSet columns: ");
+                for (int i = 1; i <= cols; i++) {
+                    sb.append(md.getColumnLabel(i)).append("(").append(md.getColumnTypeName(i)).append(")");
+                    if (i < cols) {
+                        sb.append(", ");
+                    }
+                }
+                System.err.println(sb.toString());
+            } catch (Exception ignore) {
+            }
+            throw ex;
+        }
+        return n;
+    }
 
 }

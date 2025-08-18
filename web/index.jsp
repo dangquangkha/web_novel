@@ -29,7 +29,7 @@
                     </c:when>
                     <c:otherwise>
                         <div class="dropdown">
-                            <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle"
+                            <a href="${pageContext.request.contextPath}/MyNovelsServlet" class="d-flex align-items-center text-decoration-none dropdown-toggle"
                                id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
                                 <img src="${pageContext.request.contextPath}/images/my.jpg" alt="User Avatar" width="50" height="50"
                                      class="rounded-circle me-2">
@@ -38,6 +38,8 @@
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
                                 <li><a class="dropdown-item" href="#">Account</a></li>
                                 <li><a class="dropdown-item" href="#">Order History</a></li>
+                                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/MyNovelsServlet">My Novel</a></li>
+                                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/AddNovelServlet">Add new novel</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="LogoutServlet">Logout</a></li>
                             </ul>

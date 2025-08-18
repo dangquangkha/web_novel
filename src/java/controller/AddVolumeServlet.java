@@ -9,6 +9,7 @@ import DAO.VolumeDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +25,13 @@ import model.Volume;
  * @author LAPTOP
  */
 @WebServlet(name = "AddVolumeServlet", urlPatterns = {"/AddVolumeServlet"})
+@MultipartConfig(
+        fileSizeThreshold = 1024 * 1024, // 1 MB: file lớn hơn sẽ được ghi tạm ra disk
+        maxFileSize = 5L * 1024 * 1024, // 5 MB: tối đa 1 file
+        maxRequestSize = 20L * 1024 * 1024, // 20 MB: tổng kích thước request (files + fields)
+        location = "" // optional: thư mục tạm; "" => container temp
+)
+
 public class AddVolumeServlet extends HttpServlet {
 
     /**
@@ -64,10 +72,34 @@ public class AddVolumeServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        NovelDAO dao = new NovelDAO();
-        List<Novel> listNovel = dao.listAllNovels();
-        request.setAttribute("listNovel", listNovel);
+        // Lấy author_id từ session
+        HttpSession session = request.getSession(false);
+        Integer authorId = null;
+        if (session != null) {
+            User user = (User) session.getAttribute("user");
+            if (user != null) {
+                authorId = user.getId();
+            } else {
+                // fallback nếu bạn vẫn dùng verifyUserId ở chỗ khác
+                Integer vid = (Integer) session.getAttribute("verifyUserId");
+                if (vid != null) {
+                    authorId = vid;
+                }
+            }
+        }
 
+        if (authorId == null) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            return;
+        }
+
+
+        // Lấy danh sách novel theo author_id
+        NovelDAO dao = new NovelDAO();
+        List<Novel> listNovel = dao.listNovelsByAuthor(authorId);
+
+        // Gửi dữ liệu sang JSP
+        request.setAttribute("listNovel", listNovel);
         request.getRequestDispatcher("addVolume.jsp").forward(request, response);
     }
 
@@ -129,7 +161,7 @@ public class AddVolumeServlet extends HttpServlet {
             }
 
             VolumeDAO vdao = new VolumeDAO();
-            
+
             // check duplicate
             if (vdao.existsVolume(novelId, volumeNumber)) {
                 request.setAttribute("error", "Volume " + volumeNumber + " for this novel already exists.");
@@ -147,7 +179,7 @@ public class AddVolumeServlet extends HttpServlet {
             int newId = vdao.createVolume(v);
             if (newId > 0) {
                 // Successfully added -> redirect to this novel's volume list
-                response.sendRedirect("my_novels.jsp?novelId=" + novelId);
+                response.sendRedirect(request.getContextPath() + "/AddChapterServlet?novelId=" + novelId);
             } else {
                 request.setAttribute("error", "Failed to add volume. Please try again.");
                 doGet(request, response);
