@@ -3,14 +3,31 @@
     Created on : Aug 17, 2025, 7:58:20 PM
     Author     : LAPTOP
 --%>
-
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<!DOCTYPE html>
 <html>
     <head>
         <title>Volume List</title>
         <!-- Bootstrap 5 -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            .volume-description img {
+                max-width: 100%;
+                height: auto;
+                border-radius: .5rem;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+                margin-bottom: 1rem;
+            }
+            .volume-description {
+                line-height: 1.6;
+            }
+            .description img {
+                max-width: 100%;   /* Không vượt quá cột */
+                height: auto;      /* Giữ tỷ lệ */
+                border-radius: 6px;
+            }
+        </style>
     </head>
     <body class="container py-4">
 
@@ -21,33 +38,43 @@
             <c:forEach var="v" items="${volumes}">
                 <div class="card mb-4 shadow-sm">
                     <div class="card-body">
-                        <h4 class="card-title">
-                            Volume ${v.volumeNumber}: ${v.title}
-                        </h4>
-                        <p class="card-text">
-                            <c:out value="${safeDescriptions[v.id]}" escapeXml="false" default="No description available."/>
-                        </p>
+                        <div class="row">
+                            <!-- Left: Volume info -->
+                            <div class="col-md-8" style="max-width: 66%;">
+                                <h4 class="card-title">
+                                    Volume ${v.volumeNumber}: ${v.title}
+                                </h4>
+                                <p class="card-text description">
+                                    <c:out value="${safeDescriptions[v.id]}" escapeXml="false" default="No description available."/>
+                                </p>
+                            </div>
 
-                        <h5 class="mt-3">Chapters:</h5>
-                        <c:set var="chapters" value="${chaptersMap[v.id]}"/>
+                            <!-- Right: Chapters list -->
+                            <div class="col-md-4">
+                                <h5 class="mb-3">Chapters:</h5>
+                                <c:set var="chapters" value="${chaptersMap[v.id]}"/>
 
-                        <c:if test="${not empty chapters}">
-                            <ul class="list-group list-group-flush">
-                                <c:forEach var="c" items="${chapters}">
-                                    <li class="list-group-item">
-                                        <a href="${pageContext.request.contextPath}/ReadChapterServlet?chapterId=${c.id}" class="text-decoration-none">
-                                            Chapter ${c.chapterNumber}: ${c.title}
-                                        </a>
-                                    </li>
-                                </c:forEach>
-                            </ul>
-                        </c:if>
+                                <c:if test="${not empty chapters}">
+                                    <ul class="list-group list-group-flush">
+                                        <c:forEach var="c" items="${chapters}">
+                                            <li class="list-group-item p-2">
+                                                <a href="${pageContext.request.contextPath}/ReadChapterServlet?chapterId=${c.id}" 
+                                                   class="text-decoration-none d-block">
+                                                    Chapter ${c.chapterNumber}: ${c.title}
+                                                </a>
+                                            </li>
+                                        </c:forEach>
+                                    </ul>
+                                </c:if>
 
-                        <c:if test="${empty chapters}">
-                            <p class="text-muted"><i>No chapters available.</i></p>
-                        </c:if>
+                                <c:if test="${empty chapters}">
+                                    <p class="text-muted"><i>No chapters available.</i></p>
+                                </c:if>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
             </c:forEach>
         </c:if>
 
@@ -58,8 +85,10 @@
             </div>
         </c:if>
 
-        <!-- Bootstrap JS (if needed) -->
+        <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     </body>
 </html>
+
+
 

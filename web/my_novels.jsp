@@ -59,10 +59,10 @@
                                     </c:choose>
                                 </td>
                                 <td>
-                                    <a href="edit_novel.jsp?id=${novel.id}" class="btn btn-sm btn-primary">
+                                    <a href="EditNovelServlet?id=${novel.id}" class="btn btn-sm btn-primary">
                                         <i class="bi bi-pencil"></i> Edit
                                     </a>
-                                    <a href="delete_novel?id=${novel.id}"
+                                    <a href="DeleteNovelServlet?id=${novel.id}"
                                        class="btn btn-sm btn-danger"
                                        onclick="return confirm('Are you sure you want to delete this novel?');">
                                         <i class="bi bi-trash"></i> Delete

@@ -50,7 +50,7 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary">Add Volume</button>
-                <a href="my_novels.jsp" class="btn btn-secondary ms-2">Back</a>
+                <a href="${pageContext.request.contextPath}/MyNovelsServlet" class="btn btn-secondary ms-2">Back</a>
             </form>
         </div>
 

@@ -165,6 +165,28 @@ public class NovelDAO extends BaseDao {
         return null;
     }
 
+    public boolean updateNovel(Novel novel) {
+
+        String sql = "UPDATE novels SET title=?, other_names=?, genre=?, status=?, cover_path=?, summary=? WHERE id=?";
+
+        try {
+            connection = dbc.getConnection();
+            ps = connection.prepareStatement(sql);
+
+            ps.setString(1, novel.getTitle());
+            ps.setString(2, novel.getOtherNames());
+            ps.setString(3, novel.getGenre());
+            ps.setString(4, novel.getStatus());
+            ps.setString(5, novel.getCoverPath());
+            ps.setString(6, novel.getSummary());
+            ps.setInt(7, novel.getId());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return false;
+    }
+
     /**
      * Delete novel by id (returns true if deleted)
      *
